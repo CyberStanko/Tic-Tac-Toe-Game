@@ -1,17 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./tictactoe.css"; // Import the CSS file for styles
 import CelebrationPopup from './CelebrationPopup';
+import { useRef } from 'react';
 
-function Square({ value, onSquareClick }) {
+function Square({ value, onSquareClick, isWinning, isPopOut }) {
     return (
-        <button className="square" onClick={onSquareClick}>
+        <button 
+            className={`square ${isWinning ? 'winning-outline' : ''} ${isPopOut ? 'square-pop-out' : ''}`} 
+            onClick={onSquareClick}
+        >
             {value}
         </button>
     );
 }
 
 function Board({ xIsNext, squares, onPlay }) {
+    const [popOutSquares, setPopOutSquares] = useState([]);
+    const animationTriggeredRef = useRef(false); // To prevent re-triggering animation
+
     function handleClick(i) {
         if (calculateWinner(squares) || squares[i]) {
             return;
@@ -25,7 +32,28 @@ function Board({ xIsNext, squares, onPlay }) {
         onPlay(nextSquares);
     }
 
-    const winner = calculateWinner(squares);
+    const result = calculateWinner(squares);
+    const winner = result ? result.winner : null;
+    const winningLine = result ? result.line : null;
+
+    useEffect(() => {
+        if (winningLine && !animationTriggeredRef.current) {
+            // Only trigger if winningLine exists and animation hasn't been triggered for this win
+            animationTriggeredRef.current = true; // Mark animation as triggered
+
+            setPopOutSquares([]); // Ensure it's clear before new animation
+            winningLine.forEach((squareIndex, i) => {
+                setTimeout(() => {
+                    setPopOutSquares(prev => [...prev, squareIndex]);
+                }, i * 300); // Pop out each square with a 300ms delay
+            });
+        } else if (!winningLine) {
+            // When there's no winner (e.g., game restart or undo)
+            setPopOutSquares([]); // Clear any active pop-out animations
+            animationTriggeredRef.current = false; // Reset the trigger for a new win
+        }
+    }, [winningLine]); // Dependency is winningLine
+
     let status;
     if (winner) {
         status = "Winner: " + winner;
@@ -33,23 +61,39 @@ function Board({ xIsNext, squares, onPlay }) {
         status = "Next player: " + (xIsNext ? "X" : "O");
     }
 
+    const renderSquare = (i) => {
+        const isWinningSquare = winningLine && winningLine.includes(i);
+        const isCurrentlyPoppingOut = popOutSquares.includes(i);
+        return (
+            <Square 
+                key={i}
+                value={squares[i]} 
+                onSquareClick={() => handleClick(i)}
+                isWinning={isWinningSquare}
+                isPopOut={isCurrentlyPoppingOut}
+            />
+        );
+    };
+
     return (
         <>
             <div className="status">{status}</div>
-            <div className="board-row">
-                <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-                <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-                <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
-            </div>
-            <div className="board-row">
-                <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-                <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-                <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
-            </div>
-            <div className="board-row">
-                <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-                <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-                <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
+            <div className="board">
+                <div className="board-row">
+                    {renderSquare(0)}
+                    {renderSquare(1)}
+                    {renderSquare(2)}
+                </div>
+                <div className="board-row">
+                    {renderSquare(3)}
+                    {renderSquare(4)}
+                    {renderSquare(5)}
+                </div>
+                <div className="board-row">
+                    {renderSquare(6)}
+                    {renderSquare(7)}
+                    {renderSquare(8)}
+                </div>
             </div>
         </>
     );
@@ -69,10 +113,13 @@ export default function Game() {
         setCurrentMove(nextHistory.length - 1);
         
         // Check for winner after each move
-        const gameWinner = calculateWinner(nextSquares);
-        if (gameWinner) {
-            setWinner(gameWinner);
-            setShowCelebration(true);
+        const result = calculateWinner(nextSquares);
+        if (result) {
+            setWinner(result.winner);
+            // Delay the celebration popup until after square animations (approx. 300ms * 3 = 900ms + buffer)
+            setTimeout(() => {
+                setShowCelebration(true);
+            }, 1200); // Adjust delay as needed after testing
         }
     }
 
@@ -133,7 +180,7 @@ function calculateWinner(squares) {
     for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
+            return { winner: squares[a], line: lines[i] };
         }
     }
     return null;

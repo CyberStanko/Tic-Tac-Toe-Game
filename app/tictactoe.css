@@ -46,6 +46,7 @@ body {
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
+    position: relative;
   }
   
   .square {
@@ -63,6 +64,8 @@ body {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
   }
   
   .square:hover {
@@ -73,6 +76,77 @@ body {
   
   .square:active {
     transform: translateY(0) scale(0.98);
+  }
+  
+  .square.winning-outline {
+    box-shadow: 0 0 0 4px #00ff00; /* Green outline */
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  
+  .square.square-pop-out {
+    animation: squarePopOut 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+  
+  @keyframes squarePopOut {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Initial shadow */
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 0 4px #00ff00; /* Green outline on completion */
+    }
+  }
+  
+  .square.winning {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    animation: winning-pulse 1s ease-in-out infinite;
+  }
+  
+  @keyframes winning-pulse {
+    0% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+  }
+  
+  .board {
+    position: relative;
+    overflow: visible;
+  }
+  
+  @keyframes drawLine {
+    0% {
+        width: 0;
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        width: var(--line-width, 100%);
+        opacity: 1;
+    }
+  }
+  
+  .board::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1;
   }
   
   .status {

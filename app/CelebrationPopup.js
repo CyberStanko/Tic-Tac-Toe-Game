@@ -4,6 +4,9 @@ import './celebration.css';
 
 export default function CelebrationPopup({ winner, onClose }) {
   const [confetti, setConfetti] = useState([]);
+  const [showTitle, setShowTitle] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [showButton, setShowButton] = useState(false);
 
   useEffect(() => {
     // Create confetti pieces
@@ -14,6 +17,16 @@ export default function CelebrationPopup({ winner, onClose }) {
       color: `hsl(${Math.random() * 360}, 100%, 50%)`,
     }));
     setConfetti(confettiPieces);
+
+    // Sequence animations for popup content
+    const titleDelay = 100; // Small delay for title
+    const messageDelay = titleDelay + 300; // Message after title
+    const buttonDelay = messageDelay + 300; // Button after message
+
+    setTimeout(() => setShowTitle(true), titleDelay);
+    setTimeout(() => setShowMessage(true), messageDelay);
+    setTimeout(() => setShowButton(true), buttonDelay);
+
   }, []);
 
   const handlePlayAgain = () => {
@@ -37,12 +50,12 @@ export default function CelebrationPopup({ winner, onClose }) {
             }}
           />
         ))}
-        <h2 className="celebration-title">🎉 Congratulations! 🎉</h2>
-        <p className="celebration-message">
+        <h2 className={`celebration-title ${showTitle ? 'pop-up-animation' : ''}`}>🎉 Congratulations! 🎉</h2>
+        <p className={`celebration-message ${showMessage ? 'pop-up-animation' : ''}`}>
           {winner} has won the game!
         </p>
         <button 
-          className="celebration-button" 
+          className={`celebration-button ${showButton ? 'pop-up-animation' : ''}`} 
           onClick={handlePlayAgain}
           style={{ 
             position: 'relative',
